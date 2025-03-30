@@ -25,6 +25,8 @@ def main(stdscr):
         curses.KEY_DOWN: "BACKWARD",
         curses.KEY_LEFT: "LEFT",
         curses.KEY_RIGHT: "RIGHT",
+        ord("w"): "UP",
+        ord("s"): "DOWN",
     }
 
     last_command = None
