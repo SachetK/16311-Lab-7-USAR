@@ -6,13 +6,18 @@ DEBOUNCE_TIME = 0.1 # Time in seconds to wait before registering a new key press
 INACTIVE_TIME = 0.5  # Time to wait before stopping the robot when no key is pressed
 
 def main(stdscr):
-    host = "172.26.229.47"  # Replace with your Raspberry Pi's IP address
-    port = 5000  # Choose a port number
+    HOST = "172.26.229.47"  # Replace with your Raspberry Pi's IP address
+    DRIVE_PORT = 5000  # Choose a port number
+    SERVO_PORT = 5001
 
-    sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-    sock.connect((host, port))
+    drive_sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+    drive_sock.connect((HOST, DRIVE_PORT))
 
-    print("Connected to %s:%d" % (host, port))
+    servo_sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+    servo_sock.connect((HOST, SERVO_PORT))
+
+    print("Drive connected to %s:%d" % (HOST, DRIVE_PORT))
+    print("Servo connected to %s:%d" % (HOST, SERVO_PORT))
 
     curses.noecho()
     curses.cbreak()
@@ -25,13 +30,15 @@ def main(stdscr):
         curses.KEY_DOWN: "BACKWARD",
         curses.KEY_LEFT: "LEFT",
         curses.KEY_RIGHT: "RIGHT",
-        ord("w"): "UP",
-        ord("s"): "DOWN",
+        ord("w"): "CAMERA_TOP",
+        ord("s"): "CAMERA_MIDDLE",
+        ord("x"): "CAMERA_BOTTOM",
+        ord("o"): "TOGGLE_LEVER",
+        ord("p"): "TOGGLE_CLAW",
     }
 
     last_command = None
     last_pressed_time = 0  # Time when the last key was pressed
-    last_key = None  # Keep track of the last pressed key
     last_activity_time = time.time()  # Track last activity time to detect inactivity
 
     try:
@@ -56,7 +63,8 @@ def main(stdscr):
                 stdscr.refresh()
 
                 # **Send command to the server**
-                sock.sendall(command.encode())
+                drive_sock.sendall(command.encode())
+                servo_sock.sendall(command.encode())
 
                 last_command = command
 
@@ -66,8 +74,8 @@ def main(stdscr):
         pass
 
     finally:
-        sock.sendall(b"STOP")  # Ensure the robot stops
-        sock.close()
+        drive_sock.sendall(b"STOP")  # Ensure the robot stops
+        drive_sock.close()
         curses.nocbreak()
         stdscr.keypad(False)
         curses.echo()
